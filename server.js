@@ -52,7 +52,7 @@ function lobbyMsg(room, member) {
   return {
     type: 'lobby', code: room.code, settings: room.settings, started: !!room.S,
     you: member.token === room.hostToken ? 'host' : 'guest',
-    players: room.members.map(m => ({ name: m.name, av: m.av, host: m.token === room.hostToken, you: m === member, online: !!m.ws })),
+    players: room.members.map(m => ({ name: m.name, av: m.av, skin: m.skin || 0, host: m.token === room.hostToken, you: m === member, online: !!m.ws })),
   };
 }
 function broadcastLobby(room) { room.members.forEach(m => send(m.ws, lobbyMsg(room, m))); }
@@ -91,12 +91,13 @@ function scheduleBots(room) {
 }
 
 function startGame(room) {
-  const humans = room.members.slice(0, 4).map(m => ({ name: m.name, av: m.av, bot: false, token: m.token }));
+  const humans = room.members.slice(0, 4).map(m => ({ name: m.name, av: m.av, skin: m.skin || 0, tro: m.tro || 0, bot: false, token: m.token }));
   const total = Math.max(room.settings.seats, humans.length);
   const used = new Set(humans.map(h => h.av));
   const bots = [];
-  for (const i of E.shuffle([0, 1, 2, 3, 4, 5])) { if (humans.length + bots.length >= total) break; if (!used.has(i)) { bots.push({ name: NINJA_NAMES[i], av: i, bot: true, token: null }); used.add(i); } }
+  for (const i of E.shuffle([0, 1, 2, 3, 4, 5])) { if (humans.length + bots.length >= total) break; if (!used.has(i)) { bots.push({ name: NINJA_NAMES[i], av: i, skin: 0, tro: 40 + crypto.randomInt(700), bot: true, token: null }); used.add(i); } }
   room.S = E.newGame([...humans, ...bots], room.settings);
+  room.S.gid = Date.now();
   commit(room);
 }
 
@@ -146,7 +147,7 @@ wss.on('connection', ws => {
       const code = newCode();
       room = { code, settings: sanitizeSettings(m.settings), members: [], S: null, hostToken: null };
       rooms.set(code, room);
-      me = { token: newToken(), name: clean(m.name), av: (+m.av | 0) % 6, ws };
+      me = { token: newToken(), name: clean(m.name), av: (+m.av | 0) % 6, skin: (+m.skin | 0) % 4, tro: Math.max(0, Math.min(99999, +m.tro | 0)), ws };
       room.hostToken = me.token; room.members.push(me);
       send(ws, { type: 'joined', code, token: me.token });
       return broadcastLobby(room);
@@ -170,7 +171,7 @@ wss.on('connection', ws => {
       }
       if (r.S) return send(ws, { type: 'error', msg: 'That game has already started.' });
       if (r.members.length >= 4) return send(ws, { type: 'error', msg: 'That room is full.' });
-      room = r; me = { token: newToken(), name: clean(m.name), av: (+m.av | 0) % 6, ws };
+      room = r; me = { token: newToken(), name: clean(m.name), av: (+m.av | 0) % 6, skin: (+m.skin | 0) % 4, tro: Math.max(0, Math.min(99999, +m.tro | 0)), ws };
       room.members.push(me);
       send(ws, { type: 'joined', code, token: me.token });
       return broadcastLobby(room);
@@ -186,6 +187,13 @@ wss.on('connection', ws => {
       if (me.token === room.hostToken && room.members[0]) room.hostToken = room.members[0].token;
       const r = room; room = null; me.ws = null; me = null;
       if (!r.members.length) closeRoom(r); else broadcastLobby(r);
+      return;
+    }
+    if (m.type === 'emote' && room.S) {
+      const seat = seatOf(room, me); const e = +m.e | 0;
+      if (seat < 0 || e < 0 || e > 5 || Date.now() - (me.emoT || 0) < 1200) return;
+      me.emoT = Date.now();
+      room.members.forEach(x => send(x.ws, { type: 'emote', seat, e }));
       return;
     }
     if (m.type === 'act' && room.S) {

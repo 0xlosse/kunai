@@ -125,7 +125,7 @@ function actCore(s,seat,a){
   if(!a||typeof a!=='object')return 'Bad move';
   const P=s.players[seat];if(!P)return 'Not seated';
   if(a.t==='next'){if(seat!==0||s.phase!=='round')return 'Only the host starts the next round';newRound(s);return null;}
-  if(a.t==='again'){if(seat!==0||s.phase!=='over')return 'Only the host can restart';s.players.forEach(p=>p.score=0);s.round=0;newRound(s);return null;}
+  if(a.t==='again'){if(seat!==0||s.phase!=='over')return 'Only the host can restart';s.players.forEach(p=>p.score=0);s.round=0;s.gameNo=(s.gameNo||0)+1;newRound(s);return null;}
   if(s.phase!=='play')return 'Round is over';
   if(a.t==='respond'){
     const p=s.pending;if(!p||p.target!==seat)return 'Nothing to answer';
