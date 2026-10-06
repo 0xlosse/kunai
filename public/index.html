@@ -53,16 +53,16 @@ svg.defs{position:absolute;width:0;height:0;overflow:hidden}
 .mate{position:absolute;left:var(--x);bottom:9%;width:clamp(100px,27vw,min(230px,17vw + 40px));height:var(--mh,80%);transform:translateX(-50%) scale(var(--s));transform-origin:50% 100%;
   background:none;border:0;padding:0;display:flex;align-items:flex-end;justify-content:center;transition:transform .25s cubic-bezier(.2,1.3,.4,1),filter .25s;z-index:3}
 .mate img{position:relative;z-index:2;max-width:100%;max-height:100%;object-fit:contain;animation:bob 2.6s ease-in-out infinite;animation-delay:var(--d);
-  filter:var(--sk,saturate(1)) drop-shadow(0 0 14px color-mix(in srgb,var(--c) 55%,transparent)) drop-shadow(8px 10px 0 rgba(7,7,11,.45))}
+  filter:var(--sk,saturate(1)) drop-shadow(6px 8px 0 rgba(7,7,11,.35))}
 @keyframes bob{50%{transform:translateY(-8px)}}
 .mate{pointer-events:none}.mate img,.mate .tag{pointer-events:auto}
-.mate .splash{pointer-events:none;position:absolute;left:50%;bottom:6%;width:130%;aspect-ratio:1;transform:translateX(-50%);border-radius:47% 53% 41% 59%/55% 42% 58% 45%;
-  background:radial-gradient(circle at 40% 40%,var(--c),color-mix(in srgb,var(--c) 40%,transparent) 60%,transparent 70%);opacity:.75;filter:blur(2px);z-index:1;animation:spin 18s linear infinite}
+.mate .splash{pointer-events:none;position:absolute;left:50%;bottom:-3%;width:110%;height:12%;aspect-ratio:auto;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%,rgba(7,7,11,.55),transparent 68%);opacity:1;z-index:1;animation:none}
 .mate .tag{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%) rotate(-4deg) scale(.9);z-index:4;font-family:var(--f-display);font-size:12px;color:var(--ink);background:var(--c);
   padding:2px 8px;border:2px solid var(--ink);box-shadow:2px 2px 0 #000;opacity:0;transition:opacity .2s,transform .2s;white-space:nowrap}
 .mate:hover,.mate:focus-visible{transform:translateX(-50%) scale(calc(var(--s) * 1.08));z-index:6!important;filter:brightness(1.1)}
 .mate:hover .tag,.mate:focus-visible .tag,.mate.sel .tag{opacity:1;transform:translateX(-50%) rotate(-4deg) scale(1)}
-.mate.sel img{filter:var(--sk,saturate(1)) drop-shadow(0 0 22px var(--c)) drop-shadow(8px 10px 0 rgba(7,7,11,.45))}
+.mate.sel img{filter:var(--sk,saturate(1)) drop-shadow(6px 8px 0 rgba(7,7,11,.35))}
 .mate.sel .splash{opacity:1}
 .brand{position:relative;z-index:2;margin-top:-34px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
 .logo{font-family:var(--f-display);font-weight:400;font-size:clamp(66px,20vw,118px);line-height:.9;margin:0;color:var(--hazard);letter-spacing:.02em;
@@ -265,7 +265,7 @@ input[type=text]:focus{border-color:var(--hazard)}
 @keyframes speed{to{background-position:-24px 0}}
 @keyframes slab{0%{transform:skewY(-8deg) scaleY(0)}12%{transform:skewY(-8deg) scaleY(1.1)}20%{transform:skewY(-8deg) scaleY(1)}82%{transform:skewY(-8deg) scaleY(1);opacity:1}100%{transform:skewY(-8deg) scaleY(0);opacity:0}}
 .cutin .hero2{position:absolute;right:2%;top:4%;height:92%;width:min(56%,520px);animation:heroIn 1.3s cubic-bezier(.2,.9,.2,1) forwards;display:flex;align-items:flex-end;justify-content:center}
-.cutin .hero2 img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 26px rgba(255,255,255,.35)) drop-shadow(12px 14px 0 rgba(7,7,11,.55))}
+.cutin .hero2 img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(10px 12px 0 rgba(7,7,11,.45))}
 @keyframes heroIn{0%{transform:translateX(120%) rotate(8deg)}16%{transform:translateX(-4%) rotate(-3deg)}24%{transform:translateX(0) rotate(-2deg)}80%{transform:translateX(-3%) rotate(-2deg);opacity:1}100%{transform:translateX(-140%) rotate(-6deg);opacity:0}}
 .cutin .txt{position:absolute;left:5%;right:42%;top:42%;font-family:var(--f-display);font-size:clamp(30px,8.5vw,70px);line-height:.95;color:#fff;
   -webkit-text-stroke:5px var(--ink);paint-order:stroke fill;text-shadow:6px 6px 0 var(--ink),-3px -3px 0 var(--g);transform:rotate(-8deg);animation:txtIn 1.3s cubic-bezier(.2,1.3,.4,1) forwards}
@@ -300,10 +300,10 @@ input[type=text]:focus{border-color:var(--hazard)}
   -webkit-text-stroke:4px var(--ink);paint-order:stroke fill;text-shadow:5px 5px 0 var(--pink),-3px -3px 0 var(--water);pointer-events:none;animation:glitch 3.2s steps(1) infinite}
 .mate{transition:left .45s cubic-bezier(.2,1.2,.4,1),transform .45s cubic-bezier(.2,1.2,.4,1),filter .3s,opacity .3s}
 .mate.back img{filter:var(--sk,saturate(1)) brightness(.62) saturate(.8) drop-shadow(6px 8px 0 rgba(7,7,11,.35))}
-.mate.back .splash{opacity:.25}
-.mate.front .splash{opacity:1;width:160%}
+.mate.back .splash{opacity:.6}
+.mate.front .splash{opacity:1;width:120%}
 .mate .lvl{position:absolute;left:50%;top:-4px;transform:translateX(-50%);z-index:4;font-family:var(--f-display);font-size:11px;background:var(--ink);color:#fff;border:2px solid var(--c);border-radius:6px;padding:0 6px;opacity:0}
-.mate.front .lvl{opacity:1}
+.mate.front .lvl{opacity:0}
 .arrow{position:absolute;top:50%;z-index:6;width:48px;height:48px;margin-top:-24px;border-radius:50%;border:3px solid var(--ink);background:var(--hazard);color:var(--ink);font-family:var(--f-display);font-size:22px;box-shadow:0 5px 0 #000;display:grid;place-items:center}
 .arrow.l{left:12px}.arrow.r{right:12px}
 .herocard{position:relative;z-index:5;margin:-26px auto 0;width:min(560px,calc(100% - 28px));background:var(--panel);border:3px solid var(--ink);border-radius:16px;box-shadow:0 6px 0 #000;padding:10px 14px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
@@ -363,7 +363,7 @@ input[type=text]:focus{border-color:var(--hazard)}
 .endscr .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;width:min(820px,100%);align-items:end}
 @media (max-width:620px){.endscr .grid2{grid-template-columns:1fr}}
 .star{position:relative;display:flex;flex-direction:column;align-items:center;min-height:240px;justify-content:flex-end}
-.star img{max-height:min(42vh,360px);max-width:100%;object-fit:contain;filter:drop-shadow(0 0 30px var(--c)) drop-shadow(10px 12px 0 rgba(0,0,0,.45));animation:starIn .6s cubic-bezier(.2,1.3,.4,1) .2s both}
+.star img{max-height:min(42vh,360px);max-width:100%;object-fit:contain;animation:starIn .6s cubic-bezier(.2,1.3,.4,1) .2s both}
 @keyframes starIn{from{transform:translateY(40px) scale(.7);opacity:0}}
 .star .rib{margin-top:-14px;font-family:var(--f-display);font-size:16px;background:var(--hazard);color:var(--ink);border:3px solid var(--ink);padding:4px 14px;transform:rotate(-3deg);box-shadow:0 4px 0 #000;z-index:2}
 .star .rib small{display:block;font-size:11px;text-align:center}
@@ -1058,7 +1058,7 @@ function endScreen(s){
   M.innerHTML=`<div class="endscr" style="--c:${k.glow};--bc:${bc};--bs:${bs}">
     <div class="ban">${ban}</div>
     <div class="grid2">
-      <div class="star" style="--c:${k.glow};--sk:${skinF(star.av,star.skin)}"><img src="${IMG_C[star.av%6]}" alt="" style="filter:var(--sk) drop-shadow(0 0 30px ${k.glow}) drop-shadow(10px 12px 0 rgba(0,0,0,.45))"><div class="rib">STAR PLAYER<small>${esc(star.name)}</small></div></div>
+      <div class="star" style="--c:${k.glow};--sk:${skinF(star.av,star.skin)}"><img src="${IMG_C[star.av%6]}" alt="" style="filter:var(--sk) drop-shadow(10px 12px 0 rgba(0,0,0,.4))"><div class="rib">STAR PLAYER<small>${esc(star.name)}</small></div></div>
       <div class="places">${A.pl.map((x,j)=>`<div class="place ${x.i===mySeat?'me':''}" style="--d:${.25+j*.12}s"><span class="rk">#${j+1}</span><img src="${IMG_F[x.p.av%6]}" alt=""><span class="pn2">${esc(x.p.name)}${x.p.bot?' · bot':''}<small>${s.settings.target?x.p.score+' pts · ':''}${x.cards} card${x.cards===1?'':'s'} left</small></span>${x.i===mySeat&&!watching?`<span class="dt">${A.dt>=0?'+':''}${A.dt}${TRO_SVG}</span>`:'<span></span>'}</div>`).join('')}</div>
     </div>
     ${watching?'':`<div class="rewards">
