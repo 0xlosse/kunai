@@ -36,7 +36,7 @@ const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const newCode = () => { let c; do { c = Array.from({ length: 4 }, () => CODE_ABC[crypto.randomInt(CODE_ABC.length)]).join(''); } while (rooms.has(c)); return c; };
 const newToken = () => crypto.randomBytes(16).toString('hex');
 const clean = (s, n = 12) => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, n) || 'Shinobi';
-const NINJA_NAMES = ['Fuyuki', 'Akane', 'Yami', 'Kazane', 'Kenji', 'Ageha'];
+const NINJA_NAMES = ['Finn', 'Ember', 'Hex', 'Byte', 'King', 'Momo'];
 
 function sanitizeSettings(s = {}) {
   return {

@@ -1,11 +1,11 @@
 /* KUNAI shared rules engine: used by the server (authoritative) and the browser (solo + UI checks) */
 const ELS=['F','W','A','T'];
-const EL={F:{n:'Fire',v:'--fire'},W:{n:'Water',v:'--water'},A:{n:'Wind',v:'--wind'},T:{n:'Thunder',v:'--thunder'}};
+const EL={F:{n:'Blaze',v:'--fire'},W:{n:'Tide',v:'--water'},A:{n:'Glitch',v:'--wind'},T:{n:'Volt',v:'--thunder'}};
 const cc=c=>c[0], cv=c=>c.slice(1);
-const VAL={S:'Smoke Bomb',R:'Mirror Scroll',D:'Kunai +2'};
+const VAL={S:'Block',R:'Rewind',D:'Spray +2'};
 function cardName(c,col){
-  if(c==='XW')return 'Scroll'+(col?` (${EL[col].n})`:'');
-  if(c==='X+')return 'Dragon +4'+(col?` (${EL[col].n})`:'');
+  if(c==='XW')return 'Wildstyle'+(col?` (${EL[col].n})`:'');
+  if(c==='X+')return 'Bomb +4'+(col?` (${EL[col].n})`:'');
   return `${EL[cc(c)].n} ${VAL[cv(c)]||cv(c)}`;
 }
 const pts=c=>{const v=cv(c);if(cc(c)==='X')return 50;if(/\d/.test(v))return +v;return 20;};
@@ -61,9 +61,9 @@ function applyEffect(s,seat,c,col){
   s.lastPlay={seat,id:++s.playn};
   s.top=c;s.color=cc(c)==='X'?col:cc(c);s.drew=false;
   const v=cv(c),n=s.players.length,who=nm(s,seat);
-  if(v==='S'){const t=nextSeat(s,seat);logp(s,`<b>${who}</b> throws a Smoke Bomb. <b>${nm(s,t)}</b> is skipped.`);s.turn=nextSeat(s,seat,2);}
+  if(v==='S'){const t=nextSeat(s,seat);logp(s,`<b>${who}</b> throws a Block. <b>${nm(s,t)}</b> is skipped.`);s.turn=nextSeat(s,seat,2);}
   else if(v==='R'){
-    if(n===2){s.turn=seat;logp(s,`<b>${who}</b> uses Mirror Scroll and goes again.`);}
+    if(n===2){s.turn=seat;logp(s,`<b>${who}</b> hits Rewind and goes again.`);}
     else{s.dir*=-1;s.turn=nextSeat(s,seat);logp(s,`<b>${who}</b> reverses the order.`);}
   }
   else if(v==='D'||v==='+'){
@@ -86,12 +86,12 @@ function endRound(s,w){
 }
 const CHMAX=4;
 const SKILLS=[
-  {n:'Frost Seal',d:'Freeze the next rival. They lose their next turn.'},
-  {n:'Crimson Cut',d:'Slash away any one card from your hand.'},
+  {n:'Freeze Frame',d:'Freeze the next rival. They lose their next turn.'},
+  {n:'Flame Cut',d:'Burn away any one card from your hand.'},
   {n:'Void Swap',d:'Give a rival a card you pick and steal a random one from them.'},
-  {n:'Gale Shift',d:'Change the active element.'},
-  {n:'Thunder Strike',d:'Lightning hits the next rival: they draw 2.'},
-  {n:'Mirage',d:'Reshuffle your hand into the deck and draw one card fewer.'}
+  {n:'Glitch Shift',d:'Hack the active color to any color.'},
+  {n:'Volt Strike',d:'Zap the next rival: they draw 2.'},
+  {n:'Remix',d:'Reshuffle your hand into the deck and draw one card fewer.'}
 ];
 const charge=(s,i)=>{const p=s.players[i];if(p)p.chakra=Math.min(CHMAX,(p.chakra||0)+1);};
 function settle(s){
@@ -110,13 +110,13 @@ function useSkill(s,seat,a){
   if(s.pendingDraw>0)return 'Deal with the penalty first';
   if(s.drew)return 'Use your skill before drawing';
   const k=P.av%6,who=nm(s,seat);
-  if(k===0){const t=nextSeat(s,seat);if(t===seat)return 'No rival to freeze';s.players[t].frozen=true;logp(s,`<b>${who}</b> casts Frost Seal on <b>${nm(s,t)}</b>.`);}
-  else if(k===1){const i=a.i|0;if(!P.hand[i])return 'Pick a card to cut';if(P.hand.length<2)return 'Keep at least one card';const c=P.hand.splice(i,1)[0];s.discard.unshift(c);logp(s,`<b>${who}</b> slashes away ${cardName(c)}.`);}
+  if(k===0){const t=nextSeat(s,seat);if(t===seat)return 'No rival to freeze';s.players[t].frozen=true;logp(s,`<b>${who}</b> hits <b>${nm(s,t)}</b> with Freeze Frame.`);}
+  else if(k===1){const i=a.i|0;if(!P.hand[i])return 'Pick a card to cut';if(P.hand.length<2)return 'Keep at least one card';const c=P.hand.splice(i,1)[0];s.discard.unshift(c);logp(s,`<b>${who}</b> burns away ${cardName(c)}.`);}
   else if(k===2){const t=a.target|0,T=s.players[t];if(t===seat||!T||!T.hand.length)return 'Pick a rival';const i=a.i|0;if(!P.hand[i])return 'Pick a card to give';
     const mine=P.hand.splice(i,1)[0],j=Math.random()*T.hand.length|0,got=T.hand.splice(j,1)[0];T.hand.push(mine);P.hand.push(got);logp(s,`<b>${who}</b> swaps a card with <b>${nm(s,t)}</b> through the void.`);}
-  else if(k===3){if(!ELS.includes(a.col))return 'Pick an element';s.color=a.col;logp(s,`<b>${who}</b> turns the wind: element is now <b>${EL[a.col].n}</b>.`);}
-  else if(k===4){const t=nextSeat(s,seat);if(t===seat)return 'No rival';drawCards(s,t,2);logp(s,`<b>${who}</b> strikes <b>${nm(s,t)}</b> with lightning: +2.`);}
-  else{const n=P.hand.length;if(n<2)return 'You need at least 2 cards';s.deck.push(...P.hand);P.hand=[];shuffle(s.deck);drawCards(s,seat,n-1);logp(s,`<b>${who}</b> dissolves into a Mirage and redraws ${n-1}.`);}
+  else if(k===3){if(!ELS.includes(a.col))return 'Pick an element';s.color=a.col;logp(s,`<b>${who}</b> glitches the color to <b>${EL[a.col].n}</b>.`);}
+  else if(k===4){const t=nextSeat(s,seat);if(t===seat)return 'No rival';drawCards(s,t,2);logp(s,`<b>${who}</b> zaps <b>${nm(s,t)}</b>: +2.`);}
+  else{const n=P.hand.length;if(n<2)return 'You need at least 2 cards';s.deck.push(...P.hand);P.hand=[];shuffle(s.deck);drawCards(s,seat,n-1);logp(s,`<b>${who}</b> remixes the hand and redraws ${n-1}.`);}
   P.chakra=0;setFx(s,'SK'+k,seat);return null;
 }
 function act(s,seat,a){const e=actCore(s,seat,a);if(!e)settle(s);return e;}
