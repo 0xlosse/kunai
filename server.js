@@ -20,9 +20,76 @@ function file(p) {
   return cache[p];
 }
 
+/* ---------- password gate ---------- */
+// Set SITE_PASSWORD in Railway → Variables to change it. Empty string turns the gate off.
+const SITE_PASSWORD = process.env.SITE_PASSWORD !== undefined ? process.env.SITE_PASSWORD : 'KUNAI2026';
+const GATE_KEY = crypto.createHash('sha256').update('kunai-gate:' + SITE_PASSWORD).digest();
+const passToken = () => crypto.createHmac('sha256', GATE_KEY).update('ok').digest('hex');
+function cookies(req) { const o = {}; (req.headers.cookie || '').split(';').forEach(p => { const i = p.indexOf('='); if (i > 0) o[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim()); }); return o; }
+function authed(req) {
+  if (!SITE_PASSWORD) return true;
+  const c = cookies(req).kunai_pass || '';
+  const t = passToken();
+  return c.length === t.length && crypto.timingSafeEqual(Buffer.from(c), Buffer.from(t));
+}
+const tries = new Map(); // ip -> [count, windowStart]
+function tooMany(ip) {
+  const now = Date.now(); const t = tries.get(ip) || [0, now];
+  if (now - t[1] > 10 * 60 * 1000) { t[0] = 0; t[1] = now; }
+  t[0]++; tries.set(ip, t); return t[0] > 12;
+}
+const safeNext = n => (typeof n === 'string' && /^\/(\?room=[A-Z]{4})?$/.test(n)) ? n : '/';
+function loginPage(next, err) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KUNAI</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Permanent+Marker&family=Chakra+Petch:wght@600;700&display=swap">
+<style>*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{display:grid;place-items:center;padding:16px;font-family:"Chakra Petch",system-ui,sans-serif;color:#f6f5fb;overflow:hidden;
+background:radial-gradient(circle,rgba(0,0,0,.18) 1.4px,transparent 1.9px) 0 0/10px 10px,repeating-conic-gradient(from 0deg at 50% 110%,rgba(255,255,255,.1) 0 6deg,transparent 6deg 14deg),linear-gradient(160deg,#3a0f7a,#a3127f 55%,#ff5a3c)}
+.box{width:min(420px,100%);text-align:center;display:flex;flex-direction:column;gap:18px;align-items:center}
+h1{margin:0;font-family:Bungee,Impact,sans-serif;font-weight:400;font-size:clamp(72px,22vw,120px);line-height:.9;color:#ffd60a;-webkit-text-stroke:6px #07070b;paint-order:stroke fill;text-shadow:7px 7px 0 #ff4fa3,-5px -4px 0 #2f8bff;transform:rotate(-4deg)}
+.st{font-family:"Permanent Marker",cursive;font-size:22px;background:#ff4fa3;color:#fff;border:4px solid #07070b;padding:2px 16px 6px;transform:rotate(-3deg);box-shadow:5px 5px 0 #07070b}
+form{width:100%;background:rgba(22,12,44,.88);border:3px solid #07070b;border-radius:16px;box-shadow:0 7px 0 #000;padding:18px;display:flex;flex-direction:column;gap:12px}
+label{font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#c9c3e0;text-align:left}
+input{font:inherit;font-size:20px;letter-spacing:.12em;text-transform:uppercase;padding:12px 14px;border-radius:10px;border:3px solid #2c2c40;background:#120a26;color:#fff;width:100%}
+input:focus{outline:none;border-color:#ffd60a}
+button{font-family:Bungee,Impact,sans-serif;font-size:26px;padding:12px;border:3px solid #07070b;border-radius:12px;color:#07070b;cursor:pointer;background:linear-gradient(180deg,#ffe866,#ffc400 55%,#ffb000);box-shadow:0 7px 0 #a86a00,0 10px 0 #000}
+button:active{transform:translateY(5px);box-shadow:0 2px 0 #a86a00,0 5px 0 #000}
+.err{margin:0;color:#fff;background:#ff3b2f;border:2px solid #07070b;border-radius:8px;padding:6px 10px;font-weight:700}
+</style></head><body><div class="box"><h1>KUNAI</h1><div class="st">COMING SOON</div>
+<form method="post" action="/login"><input type="hidden" name="next" value="${next}"><label for="pw">Access code</label>
+<input id="pw" name="pw" type="password" autocomplete="current-password" autofocus required>
+${err ? `<p class="err">${err}</p>` : ''}<button type="submit">ENTER</button></form></div></body></html>`;
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/health') { res.writeHead(200, { 'content-type': 'text/plain' }); return res.end('ok'); }
+  if (url.pathname === '/login') {
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', d => { body += d; if (body.length > 2000) req.destroy(); });
+      req.on('end', () => {
+        const f = new URLSearchParams(body); const next = safeNext(f.get('next'));
+        const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+        if (tooMany(ip)) { res.writeHead(429, { 'content-type': 'text/html; charset=utf-8' }); return res.end(loginPage(next, 'Too many tries. Wait a few minutes.')); }
+        if (String(f.get('pw') || '').trim().toUpperCase() === SITE_PASSWORD.toUpperCase()) {
+          tries.delete(ip);
+          const secure = (req.headers['x-forwarded-proto'] || '').includes('https') ? '; Secure' : '';
+          res.writeHead(303, { 'set-cookie': `kunai_pass=${passToken()}; Path=/; Max-Age=${30 * 86400}; HttpOnly; SameSite=Lax${secure}`, location: next });
+          return res.end();
+        }
+        res.writeHead(401, { 'content-type': 'text/html; charset=utf-8' }); res.end(loginPage(next, 'Wrong code. Try again.'));
+      });
+      return;
+    }
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+    return res.end(loginPage(safeNext(url.searchParams.get('next')), ''));
+  }
+  if (!authed(req)) {
+    const next = safeNext(url.pathname + (url.searchParams.get('room') ? '?room=' + url.searchParams.get('room').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4) : ''));
+    if (url.pathname === '/' || url.pathname === '/index.html') { res.writeHead(302, { location: '/login?next=' + encodeURIComponent(next) }); return res.end(); }
+    res.writeHead(401); return res.end('Locked');
+  }
   const f = FILES[url.pathname];
   if (!f) { res.writeHead(404); return res.end('Not found'); }
   res.writeHead(200, { 'content-type': f[1], 'cache-control': 'no-cache' });
@@ -130,7 +197,7 @@ function dropMember(room, member) {
 function closeRoom(room) { clearTimeout(room.botTimer); clearTimeout(room.idleTimer); rooms.delete(room.code); }
 
 /* ---------- sockets ---------- */
-const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 8 * 1024 });
+const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 8 * 1024, verifyClient: info => authed(info.req) });
 wss.on('connection', ws => {
   let room = null, me = null;
   ws.isAlive = true; ws.on('pong', () => { ws.isAlive = true; });
